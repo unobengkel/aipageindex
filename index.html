@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PageIndex AI Simulator with DeepSeek</title>
+    
+    <!-- Tailwind CSS with Typography Plugin for styling Markdown rendering -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Marked.js for Markdown Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- MathJax for LaTeX Rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        
+        /* Canvas Styles */
+        canvas { 
+            background-color: #1e293b; 
+            cursor: grab;
+            touch-action: none;
+        }
+        canvas:active { cursor: grabbing; }
+
+        .log-container { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
+        .log-container::-webkit-scrollbar { width: 4px; }
+        .log-container::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 2px; }
+        
+        /* Loading Animation */
+        .typing-indicator span {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background-color: #38bdf8;
+            border-radius: 50%;
+            margin-right: 2px;
+            animation: typing 1.4s infinite both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .modal-bg { backdrop-filter: blur(4px); }
+
+        /* Custom override for markdown lists */
+        .prose li { margin-top: 0.25em; margin-bottom: 0.25em; }
+        .prose p { margin-top: 0.5em; margin-bottom: 0.5em; }
+    </style>
+</head>
+<body class="h-[100dvh] w-full flex flex-col overflow-hidden relative bg-slate-900">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 p-3 flex flex-col md:flex-row justify-between items-center z-20 gap-3 shrink-0 shadow-sm">
+        <div class="text-center md:text-left">
+            <h1 class="text-lg md:text-xl font-bold text-white flex justify-center md:justify-start items-center gap-2">
+                <i class="fa-solid fa-network-wired text-sky-400"></i> PageIndex AI Simulator
+            </h1>
+            <p class="text-[10px] md:text-xs text-slate-400 mt-0.5">Agentic RAG vs Vector RAG (Dinamis)</p>
+        </div>
+        <div class="flex flex-row items-center gap-2 w-full md:w-auto">
+            <a href="/tutorial" class="text-xs text-slate-400 hover:text-sky-400 transition-colors mr-2 hidden sm:flex items-center gap-1">
+                <i class="fa-solid fa-circle-question"></i> Tutorial
+            </a>
+            <button onclick="openDocModal()" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-500 text-white text-xs md:text-sm px-3 py-2 rounded-md transition border border-indigo-500 flex items-center justify-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-file-import"></i> <span class="hidden sm:inline">Input</span> Dokumen
+            </button>
+            <div class="hidden md:flex items-center gap-2 px-3 py-1 bg-slate-800 rounded border border-slate-700">
+                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span class="text-[10px] text-slate-400">Backend Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 w-full relative">
+        
+        <!-- Left Panel: Chat & Logs -->
+        <div class="w-full lg:w-[35%] lg:max-w-md h-[40%] lg:h-full flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900 z-10 shrink-0 lg:shrink min-h-0">
+            
+            <!-- Agent Logs -->
+            <div class="flex-1 p-3 overflow-y-auto log-container flex flex-col gap-2.5 min-h-0" id="chatLogs">
+                <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 text-xs md:text-sm w-fit max-w-[95%]">
+                    <p class="text-sky-400 font-semibold mb-1"><i class="fa-solid fa-robot"></i> Sistem Siap</p>
+                    <p class="text-slate-300" id="statusText">Memuat dokumen...</p>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-2 md:p-3 bg-slate-900 border-t border-slate-800 shrink-0">
+                <form id="queryForm" class="flex gap-2 relative">
+                    <input type="text" id="userInput" placeholder="Tanya sesuatu tentang dokumen..." class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-3 md:pl-4 pr-10 py-2.5 text-xs md:text-sm focus:outline-none focus:border-sky-500 transition-colors shadow-inner" required>
+                    <button type="submit" id="sendBtn" class="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-sky-600 hover:bg-sky-500 text-white rounded-md transition-colors flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane text-sm"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visual Node Tree (Canvas) -->
+        <div class="flex-1 w-full h-[60%] lg:h-full relative bg-slate-950 flex flex-col min-h-0">
+            
+            <!-- Info Legend -->
+            <div class="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-slate-900/85 p-2 md:p-3 rounded border border-slate-800 text-[9px] md:text-xs backdrop-blur-sm shadow-lg pointer-events-none max-w-[150px] md:max-w-xs">
+                <p class="font-bold text-slate-200 mb-1 truncate" id="canvasTitle">Struktur Pohon Dokumen</p>
+                <div class="flex items-center gap-1.5 mt-1.5"><div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-slate-600"></div> Node Tersedia</div>
+                <div class="flex items-center gap-1.5 mt-1"><div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-yellow-500"></div> Dievaluasi (Map)</div>
+                <div class="flex items-center gap-1.5 mt-1"><div class="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div> Dipilih (Extract)</div>
+            </div>
+
+            <!-- Zoom & Pan Controls -->
+            <div class="absolute bottom-2 right-2 md:bottom-6 md:right-6 z-10 flex flex-col gap-1.5">
+                <button onclick="zoomIn()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white w-7 h-7 md:w-9 md:h-9 rounded-full shadow-lg border border-slate-700 flex items-center justify-center transition" title="Zoom In">
+                    <i class="fa-solid fa-plus text-xs md:text-base"></i>
+                </button>
+                <button onclick="zoomOut()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white w-7 h-7 md:w-9 md:h-9 rounded-full shadow-lg border border-slate-700 flex items-center justify-center transition" title="Zoom Out">
+                    <i class="fa-solid fa-minus text-xs md:text-base"></i>
+                </button>
+                <button onclick="resetView()" class="bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-300 w-7 h-7 md:w-9 md:h-9 rounded-full shadow-lg border border-slate-700 flex items-center justify-center transition mt-1" title="Pusatkan Layar">
+                    <i class="fa-solid fa-compress text-xs md:text-base"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 w-full h-full relative" id="canvasContainer">
+                <canvas id="treeCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Input Dokumen -->
+    <div id="docModal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 modal-bg p-3 md:p-6">
+        <div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full md:w-2/3 max-w-3xl flex flex-col overflow-hidden max-h-[85dvh]">
+            <div class="p-3 md:p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50 shrink-0">
+                <h2 class="text-base md:text-lg font-bold text-white"><i class="fa-solid fa-file-lines text-indigo-400"></i> Indexing Dokumen</h2>
+                <button onclick="closeDocModal()" class="text-slate-400 hover:text-white transition p-1"><i class="fa-solid fa-xmark fa-lg"></i></button>
+            </div>
+            <div class="p-3 md:p-5 flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">
+                <p class="text-xs md:text-sm text-slate-300 leading-relaxed">Masukkan teks dokumen panjang Anda atau upload file (PDF/TXT) di bawah ini.</p>
+                
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Metode 1: Upload File</label>
+                    <input type="file" id="docFile" accept=".pdf,.txt" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 transition-all cursor-pointer bg-slate-950 p-2 rounded border border-slate-700">
+                </div>
+
+                <div class="flex flex-col gap-2 flex-1 min-h-[150px]">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Metode 2: Copy-Paste Teks</label>
+                    <textarea id="rawDocInput" class="w-full flex-1 bg-slate-950 border border-slate-700 rounded p-3 text-xs md:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 resize-none shadow-inner" placeholder="Tempel teks di sini..."></textarea>
+                </div>
+            </div>
+            <div class="p-3 border-t border-slate-800 bg-slate-800/50 flex flex-row justify-end gap-2 shrink-0">
+                <button onclick="closeDocModal()" class="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded transition text-center w-1/3 sm:w-auto">Batal</button>
+                <button onclick="processNewDocument()" class="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded font-semibold flex items-center justify-center gap-2 w-2/3 sm:w-auto transition-colors shadow-md" id="processDocBtn">
+                    <i class="fa-solid fa-gears"></i> Proses ke Node
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA & STATE DOKUMEN ---
+        const defaultDocumentTree = {
+            id: "root", title: "Laporan Q3 2025", summary: "Laporan performa Q3 2025.", content: "",
+            children: [
+                { id: "node_1", title: "Ringkasan", summary: "Pencapaian utama.", content: "Laba bersih naik 15%.", children: [] },
+                { id: "node_2", title: "Kinerja", summary: "Rincian dana.", content: "", children: [
+                    { id: "node_2_1", title: "Pendapatan", summary: "Pemasukan utama.", content: "Total Rp 500M.", children: [] },
+                    { id: "node_2_2", title: "Pengeluaran", summary: "Biaya operasional.", content: "Total Rp 350M.", children: [] }
+                ]}
+            ]
+        };
+
+        let documentTree = defaultDocumentTree;
+        let treeMapForLLM = null;
+
+        const generateTreeMap = (node) => {
+            return {
+                id: node.id, title: node.title, summary: node.summary,
+                children: node.children && Array.isArray(node.children) ? node.children.map(generateTreeMap) : []
+            };
+        };
+
+        function updateTreeMap() { treeMapForLLM = generateTreeMap(documentTree); }
+
+        // --- MODAL & INDEXING ---
+        const docModal = document.getElementById('docModal');
+        const rawDocInput = document.getElementById('rawDocInput');
+        const processDocBtn = document.getElementById('processDocBtn');
+
+        function openDocModal() { docModal.classList.remove('hidden'); }
+        function closeDocModal() { docModal.classList.add('hidden'); }
+
+        // --- BACKEND API INTEGRATION ---
+        async function processNewDocument() {
+            const rawText = document.getElementById('rawDocInput').value.trim();
+            const fileInput = document.getElementById('docFile');
+            const file = fileInput.files[0];
+
+            if (!rawText && !file) return alert("Silakan masukkan teks atau pilih file terlebih dahulu.");
+            
+            processDocBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses Dokumen...`;
+            processDocBtn.disabled = true;
+
+            const formData = new FormData();
+            if (file) {
+                formData.append('file', file);
+            } else {
+                formData.append('text', rawText);
+            }
+
+            try {
+                const response = await fetch('/api/index', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || "Gagal memproses dokumen");
+                }
+
+                const data = await response.json();
+                documentTree = data.tree;
+                
+                localStorage.setItem('simulatorDocument', JSON.stringify(documentTree));
+                updateTreeMap();
+                
+                document.getElementById('canvasTitle').innerText = documentTree.title;
+                statusText.innerHTML = `Dokumen <b>"${documentTree.title}"</b> berhasil diproses di Backend.`;
+                resizeCanvas(); 
+
+                closeDocModal();
+                appendLog(`<p class="text-green-400 font-bold mb-1"><i class="fa-solid fa-check-circle"></i> Indexing Selesai!</p>
+                           <p>Dokumen berhasil diproses di server dan disimpan dalam database vektor.</p>`);
+            } catch(e) {
+                console.error("Error Processing:", e);
+                alert("Gagal memproses dokumen: " + e.message);
+            } finally {
+                processDocBtn.innerHTML = `<i class="fa-solid fa-gears"></i> Proses ke Node`;
+                processDocBtn.disabled = false;
+            }
+        }
+
+
+
+        // --- CANVAS & DYNAMIC VISUALIZATION WITH PAN & ZOOM ---
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvasContainer');
+        
+        let canvasNodes = []; 
+        let highlightedNodeId = null;
+        let evaluatingNodeIds = [];
+
+        let scale = 1;
+        let panX = 0;
+        let panY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        function resizeCanvas() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            calculateDynamicLayout();
+            drawTree();
+        }
+        
+        window.addEventListener('resize', () => {
+            clearTimeout(window.resizeTimer);
+            window.resizeTimer = setTimeout(resizeCanvas, 150);
+        });
+
+        function calculateDynamicLayout() {
+            canvasNodes = [];
+            if (!documentTree) return;
+
+            let depthGroups = [];
+            function traverse(node, depth, parentId) {
+                if (!depthGroups[depth]) depthGroups[depth] = [];
+                let visualNode = { id: node.id, text: node.title || node.id, parent: parentId };
+                depthGroups[depth].push(visualNode);
+                if (node.children && Array.isArray(node.children)) {
+                    node.children.forEach(c => traverse(c, depth + 1, node.id));
+                }
+            }
+            
+            traverse(documentTree, 0, null);
+
+            const maxDepth = depthGroups.length;
+            let maxBreadth = 0;
+            depthGroups.forEach(g => { if(g.length > maxBreadth) maxBreadth = g.length; });
+
+            const isMobile = canvas.width < 500;
+            const horizontalSpacing = isMobile ? 120 : 160;
+            const verticalSpacing = isMobile ? 90 : 120;
+            const nodeRadius = isMobile ? 32 : 40;
+            
+            const virtualWidth = Math.max(canvas.width, (maxBreadth + 1) * horizontalSpacing);
+            const virtualHeight = Math.max(canvas.height, (maxDepth + 1) * verticalSpacing);
+
+            depthGroups.forEach((group, depth) => {
+                const yPos = verticalSpacing * (depth + 1);
+                const horizontalStep = virtualWidth / (group.length + 1);
+                
+                group.forEach((node, index) => {
+                    node.x = horizontalStep * (index + 1);
+                    node.y = yPos;
+                    node.radius = nodeRadius;
+                    canvasNodes.push(node);
+                });
+            });
+
+            const scaleX = canvas.width / virtualWidth;
+            const scaleY = canvas.height / virtualHeight;
+            scale = Math.min(1, scaleX, scaleY) * (isMobile ? 0.9 : 0.8);
+            
+            panX = (canvas.width - virtualWidth * scale) / 2;
+            panY = (canvas.height - virtualHeight * scale) / 2;
+        }
+
+        function drawTree() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.translate(panX, panY);
+            ctx.scale(scale, scale);
+
+            canvasNodes.forEach(node => {
+                if (node.parent) {
+                    const parentNode = canvasNodes.find(n => n.id === node.parent);
+                    if (parentNode) {
+                        ctx.beginPath();
+                        ctx.moveTo(parentNode.x, parentNode.y);
+                        ctx.lineTo(node.x, node.y);
+                        ctx.strokeStyle = '#475569';
+                        ctx.lineWidth = 2 / scale;
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            canvasNodes.forEach(node => {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                
+                if (highlightedNodeId === node.id) {
+                    ctx.fillStyle = '#22c55e'; 
+                    ctx.shadowColor = '#22c55e';
+                    ctx.shadowBlur = 20 / scale;
+                } else if (evaluatingNodeIds.includes(node.id) || evaluatingNodeIds.includes("all")) {
+                    ctx.fillStyle = '#eab308';
+                    ctx.shadowColor = '#eab308';
+                    ctx.shadowBlur = 10 / scale;
+                } else {
+                    ctx.fillStyle = '#334155';
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 3 / scale;
+                ctx.stroke();
+                
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffffff';
+                
+                const fontSize = canvas.width < 500 ? 10 : 11;
+                ctx.font = `${fontSize}px Inter, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                let words = node.text.split(' ');
+                let line1 = "", line2 = "";
+                const maxChars = canvas.width < 500 ? 11 : 14;
+                
+                if (words.length === 1) {
+                    line1 = words[0].length > maxChars ? words[0].substring(0, maxChars-2) + ".." : words[0];
+                } else {
+                    let mid = Math.ceil(words.length / 2);
+                    line1 = words.slice(0, mid).join(' ');
+                    line2 = words.slice(mid).join(' ');
+                    if(line1.length > maxChars) line1 = line1.substring(0, maxChars-2) + "..";
+                    if(line2.length > maxChars) line2 = line2.substring(0, maxChars-2) + "..";
+                }
+
+                if (line2) {
+                    ctx.fillText(line1, node.x, node.y - 6);
+                    ctx.fillText(line2, node.x, node.y + 6);
+                } else {
+                    ctx.fillText(line1, node.x, node.y);
+                }
+            });
+        }
+
+        // --- KONTROL ZOOM & PAN ---
+        function applyZoom(factor, originX = canvas.width/2, originY = canvas.height/2) {
+            let newScale = scale * factor;
+            newScale = Math.max(0.1, Math.min(newScale, 4));
+            panX = originX - (originX - panX) * (newScale / scale);
+            panY = originY - (originY - panY) * (newScale / scale);
+            scale = newScale;
+            drawTree();
+        }
+
+        function zoomIn() { applyZoom(1.3); }
+        function zoomOut() { applyZoom(1 / 1.3); }
+        function resetView() { calculateDynamicLayout(); drawTree(); }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStartX = e.clientX - panX;
+            dragStartY = e.clientY - panY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            panX = e.clientX - dragStartX;
+            panY = e.clientY - dragStartY;
+            drawTree();
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const factor = Math.exp(-e.deltaY * 0.001);
+            applyZoom(factor, mouseX, mouseY);
+        }, { passive: false });
+
+        let initialPinchDistance = null;
+        let initialScale = 1;
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                dragStartX = e.touches[0].clientX - panX;
+                dragStartY = e.touches[0].clientY - panY;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                initialPinchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialScale = scale;
+            }
+        }, {passive: false});
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDragging && e.touches.length === 1) {
+                panX = e.touches[0].clientX - dragStartX;
+                panY = e.touches[0].clientY - dragStartY;
+                drawTree();
+            } else if (e.touches.length === 2 && initialPinchDistance) {
+                const currentDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                
+                const rect = canvas.getBoundingClientRect();
+                const centerX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+                const centerY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+
+                const factor = currentDistance / initialPinchDistance;
+                let newScale = initialScale * factor;
+                newScale = Math.max(0.1, Math.min(newScale, 4));
+
+                panX = centerX - (centerX - panX) * (newScale / scale);
+                panY = centerY - (centerY - panY) * (newScale / scale);
+                scale = newScale;
+                
+                initialPinchDistance = currentDistance;
+                initialScale = scale;
+                drawTree();
+            }
+        }, {passive: false});
+
+        canvas.addEventListener('touchend', () => { 
+            isDragging = false; 
+            initialPinchDistance = null;
+        });
+
+
+        // --- SISTEM LOG & CHAT UI ---
+        const chatLogs = document.getElementById('chatLogs');
+        const userInput = document.getElementById('userInput');
+        const form = document.getElementById('queryForm');
+        
+        function appendLog(htmlContent, align = 'left') {
+            const div = document.createElement('div');
+            const baseClasses = `p-3 rounded-lg text-xs md:text-sm w-fit max-w-[95%] md:max-w-[90%]`;
+            
+            if (align === 'right') {
+                div.className = `${baseClasses} bg-sky-900 border border-sky-700 self-end text-white`;
+                div.innerHTML = htmlContent;
+            } else {
+                div.className = `${baseClasses} bg-slate-800 border border-slate-700 self-start text-slate-200`;
+                div.innerHTML = htmlContent;
+            }
+
+            chatLogs.appendChild(div);
+            chatLogs.scrollTop = chatLogs.scrollHeight;
+
+            if (window.MathJax) {
+                MathJax.typesetPromise([div]).catch((err) => console.error("MathJax error:", err));
+            }
+
+            return div;
+        }
+
+        const statusText = document.getElementById('statusText');
+        function loadFromStorage() {
+            const savedDoc = localStorage.getItem('simulatorDocument');
+            if (savedDoc) {
+                try {
+                    documentTree = JSON.parse(savedDoc);
+                    statusText.innerHTML = `Sistem memuat dokumen <b>"${documentTree.title}"</b> dari memori.`;
+                } catch (e) {
+                    documentTree = defaultDocumentTree;
+                }
+            }
+            updateTreeMap();
+            document.getElementById('canvasTitle').innerText = documentTree.title;
+            setTimeout(resizeCanvas, 200);
+        }
+
+        function findNodeTitle(tree, id) {
+             if (tree.id === id) return tree.title;
+            if (tree.children && Array.isArray(tree.children)) {
+                for (let child of tree.children) {
+                    const found = findNodeTitle(child, id);
+                    if (found) return found;
+                }
+            }
+            return id;
+        }
+
+        function showTyping(message) {
+            const id = 'typing-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = `p-3 rounded-lg text-xs md:text-sm w-fit max-w-[95%] md:max-w-[90%] bg-slate-800 border border-slate-700 self-start text-sky-400 font-mono`;
+            div.innerHTML = `<i class="fa-solid fa-microchip"></i> ${message} <span class="typing-indicator"><span></span><span></span><span></span></span>`;
+            chatLogs.appendChild(div);
+            chatLogs.scrollTop = chatLogs.scrollHeight;
+            return id;
+        }
+
+        function removeTyping(id) {
+            const el = document.getElementById(id);
+            if(el) el.remove();
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = userInput.value.trim();
+            if(!query) return;
+
+            userInput.blur();
+            highlightedNodeId = null;
+            evaluatingNodeIds = [];
+            drawTree();
+
+            appendLog(`<b>User:</b> ${query}`, 'right');
+            userInput.value = '';
+
+            const typingId = showTyping("Agent sedang berpikir...");
+            evaluatingNodeIds = ["all"];
+            drawTree();
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Gagal mendapatkan jawaban");
+                }
+
+                const data = await response.json();
+                
+                removeTyping(typingId);
+                evaluatingNodeIds = [];
+
+                highlightedNodeId = data.selected_node_id;
+                drawTree();
+                
+                const nodeTitle = findNodeTitle(documentTree, data.selected_node_id);
+                appendLog(`<p class="text-green-400 mb-1"><i class="fa-solid fa-bullseye"></i> <b>Penalaran Selesai</b></p>
+                           <p>Agen mengekstrak: <b>${nodeTitle}</b></p>`);
+
+                const mdHTML = marked.parse(data.answer);
+                const finalHTML = `
+                    <div class="text-sky-300 font-semibold mb-2"><i class="fa-solid fa-check-double"></i> Jawaban Final (Hybrid RAG):</div>
+                    <div class="prose prose-invert prose-sm max-w-none text-slate-100">${mdHTML}</div>
+                `;
+                appendLog(finalHTML);
+
+            } catch (error) {
+                removeTyping(typingId);
+                appendLog(`<p class="text-red-400 font-bold"><i class="fa-solid fa-circle-xmark"></i> Error:</p><p class="text-red-300">${error.message}</p>`);
+                evaluatingNodeIds = [];
+                highlightedNodeId = null;
+                drawTree();
+            }
+        });
+
+        // Inisialisasi
+        document.addEventListener('DOMContentLoaded', loadFromStorage);
+
+    </script>
+</body>
+</html>
