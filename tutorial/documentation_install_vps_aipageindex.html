@@ -36,242 +36,381 @@
                 }, 2000);
             });
         }
+
+        // Toggle Sidebar on Mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Switch between Tutorial and Readme
+        function switchTab(tabId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+            
+            // Show target section
+            const target = document.getElementById('section-' + tabId);
+            target.classList.remove('hidden');
+            target.classList.add('block');
+
+            // Update button styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-slate-300', 'hover:bg-slate-800', 'hover:text-white');
+            });
+            
+            // Set active button style
+            const activeBtn = document.getElementById('btn-nav-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-300', 'hover:bg-slate-800', 'hover:text-white');
+                activeBtn.classList.add('bg-blue-600', 'text-white');
+            }
+
+            // Auto-close sidebar on mobile after clicking
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebar-overlay').classList.add('hidden');
+            }
+        }
     </script>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+<body class="bg-slate-50 text-slate-800 antialiased h-screen overflow-hidden flex">
 
-    <!-- Header Section -->
-    <header class="bg-blue-600 text-white shadow-lg">
-        <div class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between">
-            <div>
-                <h1 class="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
-                    <i class="fa-solid fa-rocket mr-3"></i>Deployment PageIndex-AI
-                </h1>
-                <p class="text-blue-100 text-lg sm:text-xl max-w-2xl">
-                    Panduan teknis langkah demi langkah untuk melakukan instalasi dan deployment aplikasi berbasis Python dengan layanan DeepSeek AI.
-                </p>
-            </div>
-            <div class="mt-6 sm:mt-0 hidden md:block">
-                <i class="fa-brands fa-python text-6xl text-blue-200 opacity-50"></i>
-            </div>
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-40 hidden md:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col shadow-xl">
+        <div class="p-6 flex items-center justify-between md:justify-center border-b border-slate-800">
+            <h2 class="text-xl font-bold tracking-wider flex items-center">
+                <i class="fa-solid fa-code-branch text-blue-500 mr-3"></i> Docs AI
+            </h2>
+            <button class="md:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
         </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
         
-        <div class="space-y-8">
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-2">Menu Utama</p>
+            
+            <button id="btn-nav-tutorial" onclick="switchTab('tutorial')" class="nav-btn w-full flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg transition-colors text-left font-medium">
+                <i class="fa-solid fa-book-open-reader w-6 text-center mr-2"></i>
+                Tutorial
+            </button>
+            
+            <button id="btn-nav-readme" onclick="switchTab('readme')" class="nav-btn w-full flex items-center px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors text-left font-medium">
+                <i class="fa-solid fa-circle-info w-6 text-center mr-2"></i>
+                Readme
+            </button>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-500 text-center">
+            &copy; 2026 UnoBengkel
+        </div>
+    </aside>
 
-            <!-- Step 1 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">1</span>
-                    <h2 class="text-xl font-semibold text-slate-800">Mengunduh Source Code (Clone Repository)</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-slate-600 mb-4">Langkah pertama adalah mengambil salinan kode program dari GitHub ke server atau komputer lokalmu. <br>
-                    <span class="text-amber-600 bg-amber-50 px-2 py-1 rounded text-sm font-medium mt-2 inline-block"><i class="fa-solid fa-circle-info mr-1"></i> Perbaikan: Menggunakan <code>git clone</code> untuk mengambil data, bukan <code>git init</code>.</span></p>
-                    
-                    <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
-                        <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
-                            <span class="text-xs font-medium text-slate-400">Terminal</span>
-                            <button id="btn-step-1" onclick="copyCode('btn-step-1', 'git clone https://github.com/unobengkel/aipageindex.git\ncd aipageindex')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
-                                <i class="fa-regular fa-copy mr-1"></i> Salin
-                            </button>
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col overflow-hidden relative">
+        
+        <!-- Mobile Header (Visible only on small screens) -->
+        <div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center shadow-md z-30">
+            <h1 class="font-bold tracking-wide">PageIndex-AI</h1>
+            <button onclick="toggleSidebar()" class="text-slate-300 hover:text-white focus:outline-none p-1">
+                <i class="fa-solid fa-bars text-2xl"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Area -->
+        <div class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50">
+            
+            <!-- ===================== TUTORIAL SECTION ===================== -->
+            <div id="section-tutorial" class="content-section block pb-12">
+                <!-- Header Section -->
+                <header class="bg-blue-600 text-white shadow-lg">
+                    <div class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
+                                <i class="fa-solid fa-rocket mr-3"></i>Deployment PageIndex-AI
+                            </h1>
+                            <p class="text-blue-100 text-lg sm:text-xl max-w-2xl">
+                                Panduan teknis langkah demi langkah untuk melakukan instalasi dan deployment aplikasi berbasis Python dengan layanan DeepSeek AI.
+                            </p>
                         </div>
-                        <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>git clone https://github.com/unobengkel/aipageindex.git
+                        <div class="mt-6 sm:mt-0 hidden md:block">
+                            <i class="fa-brands fa-python text-6xl text-blue-200 opacity-50"></i>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
+                    <div class="space-y-8">
+                        <!-- Step 1 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
+                            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">1</span>
+                                <h2 class="text-xl font-semibold text-slate-800">Mengunduh Source Code (Clone Repository)</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 mb-4">Langkah pertama adalah mengambil salinan kode program dari GitHub ke server atau komputer lokalmu. <br>
+                                <span class="text-amber-600 bg-amber-50 px-2 py-1 rounded text-sm font-medium mt-2 inline-block"><i class="fa-solid fa-circle-info mr-1"></i> Perbaikan: Menggunakan <code>git clone</code> untuk mengambil data, bukan <code>git init</code>.</span></p>
+                                
+                                <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
+                                    <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                        <span class="text-xs font-medium text-slate-400">Terminal</span>
+                                        <button id="btn-step-1" onclick="copyCode('btn-step-1', 'git clone https://github.com/unobengkel/aipageindex.git\ncd aipageindex')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
+                                            <i class="fa-regular fa-copy mr-1"></i> Salin
+                                        </button>
+                                    </div>
+                                    <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>git clone https://github.com/unobengkel/aipageindex.git
 cd aipageindex</code></pre>
-                    </div>
-                    <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
-                        <p class="text-sm text-slate-700"><strong>Penjelasan:</strong> Perintah ini akan membuat folder bernama <code>aipageindex</code> yang berisi seluruh logika aplikasi, lalu perintah <code>cd</code> (change directory) digunakan untuk masuk ke dalam folder tersebut.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 2 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">2</span>
-                    <h2 class="text-xl font-semibold text-slate-800">Membuat Lingkungan Terisolasi (Virtual Environment)</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-slate-600 mb-4">Agar <em>library</em> aplikasi ini tidak bentrok dengan aplikasi Python lain di komputermu, kita harus membuat "wadah" khusus.</p>
-                    
-                    <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
-                        <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
-                            <span class="text-xs font-medium text-slate-400">Terminal</span>
-                            <button id="btn-step-2" onclick="copyCode('btn-step-2', 'python3 -m venv venv\nsource venv/bin/activate')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
-                                <i class="fa-regular fa-copy mr-1"></i> Salin
-                            </button>
+                                </div>
+                                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                                    <p class="text-sm text-slate-700"><strong>Penjelasan:</strong> Perintah ini akan membuat folder bernama <code>aipageindex</code> yang berisi seluruh logika aplikasi, lalu perintah <code>cd</code> (change directory) digunakan untuk masuk ke dalam folder tersebut.</p>
+                                </div>
+                            </div>
                         </div>
-                        <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>python3 -m venv venv
+
+                        <!-- Step 2 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
+                            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">2</span>
+                                <h2 class="text-xl font-semibold text-slate-800">Membuat Lingkungan Terisolasi (Virtual Environment)</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 mb-4">Agar <em>library</em> aplikasi ini tidak bentrok dengan aplikasi Python lain di komputermu, kita harus membuat "wadah" khusus.</p>
+                                
+                                <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
+                                    <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                        <span class="text-xs font-medium text-slate-400">Terminal</span>
+                                        <button id="btn-step-2" onclick="copyCode('btn-step-2', 'python3 -m venv venv\nsource venv/bin/activate')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
+                                            <i class="fa-regular fa-copy mr-1"></i> Salin
+                                        </button>
+                                    </div>
+                                    <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>python3 -m venv venv
 source venv/bin/activate</code></pre>
-                    </div>
-                    <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
-                        <p class="text-sm text-slate-700"><strong>Penjelasan:</strong> <code>python3 -m venv venv</code> membuat folder lingkungan virtual bernama <code>venv</code>. Perintah <code>source</code> digunakan untuk "masuk" ke dalam wadah tersebut. Setelah aktif, terminalmu biasanya akan muncul tanda <code>(venv)</code> di bagian depan.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 3 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">3</span>
-                    <h2 class="text-xl font-semibold text-slate-800">Instalasi Dependensi</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-slate-600 mb-4">Aplikasi membutuhkan berbagai pustaka (libraries) pendukung agar bisa berjalan.</p>
-                    
-                    <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
-                        <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
-                            <span class="text-xs font-medium text-slate-400">Terminal</span>
-                            <button id="btn-step-3" onclick="copyCode('btn-step-3', 'pip install -r requirements.txt')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
-                                <i class="fa-regular fa-copy mr-1"></i> Salin
-                            </button>
+                                </div>
+                                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                                    <p class="text-sm text-slate-700"><strong>Penjelasan:</strong> <code>python3 -m venv venv</code> membuat folder lingkungan virtual bernama <code>venv</code>. Perintah <code>source</code> digunakan untuk "masuk" ke dalam wadah tersebut. Setelah aktif, terminalmu biasanya akan muncul tanda <code>(venv)</code> di bagian depan.</p>
+                                </div>
+                            </div>
                         </div>
-                        <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>pip install -r requirements.txt</code></pre>
-                    </div>
-                    <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
-                        <p class="text-sm text-slate-700"><strong>Penjelasan:</strong> File <code>requirements.txt</code> berisi daftar semua pustaka yang diperlukan (seperti FastAPI, Uvicorn, atau OpenAI/DeepSeek SDK). Perintah ini akan mengunduh dan memasang semuanya secara otomatis ke dalam folder <code>venv</code>.</p>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Step 4 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">4</span>
-                    <h2 class="text-xl font-semibold text-slate-800">Konfigurasi API Key DeepSeek</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-slate-600 mb-4">Ini adalah bagian krusial agar AI bisa bekerja. Kamu perlu mendaftarkan identitas (API Key) milikmu.</p>
-                    
-                    <p class="font-mono text-sm bg-slate-100 p-2 rounded mb-3 inline-block"><strong>Perintah:</strong> <code>nano .env</code></p>
-                    
-                    <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
-                        <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
-                            <span class="text-xs font-medium text-slate-400">Isi File .env</span>
-                            <button id="btn-step-4" onclick="copyCode('btn-step-4', 'DEEPSEEK_API_KEY=sk-1232138y218327472164422')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
-                                <i class="fa-regular fa-copy mr-1"></i> Salin
-                            </button>
+                        <!-- Step 3 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
+                            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">3</span>
+                                <h2 class="text-xl font-semibold text-slate-800">Instalasi Dependensi</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 mb-4">Aplikasi membutuhkan berbagai pustaka (libraries) pendukung agar bisa berjalan.</p>
+                                
+                                <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
+                                    <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                        <span class="text-xs font-medium text-slate-400">Terminal</span>
+                                        <button id="btn-step-3" onclick="copyCode('btn-step-3', 'pip install -r requirements.txt')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
+                                            <i class="fa-regular fa-copy mr-1"></i> Salin
+                                        </button>
+                                    </div>
+                                    <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>pip install -r requirements.txt</code></pre>
+                                </div>
+                                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                                    <p class="text-sm text-slate-700"><strong>Penjelasan:</strong> File <code>requirements.txt</code> berisi daftar semua pustaka yang diperlukan (seperti FastAPI, Uvicorn, atau OpenAI/DeepSeek SDK). Perintah ini akan mengunduh dan memasang semuanya secara otomatis ke dalam folder <code>venv</code>.</p>
+                                </div>
+                            </div>
                         </div>
-                        <pre class="code-block p-4 text-sm text-blue-300 font-mono overflow-x-auto"><code><span class="text-slate-500"># Format:</span>
+
+                        <!-- Step 4 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
+                            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">4</span>
+                                <h2 class="text-xl font-semibold text-slate-800">Konfigurasi API Key DeepSeek</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 mb-4">Ini adalah bagian krusial agar AI bisa bekerja. Kamu perlu mendaftarkan identitas (API Key) milikmu.</p>
+                                
+                                <p class="font-mono text-sm bg-slate-100 p-2 rounded mb-3 inline-block"><strong>Perintah:</strong> <code>nano .env</code></p>
+                                
+                                <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
+                                    <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                        <span class="text-xs font-medium text-slate-400">Isi File .env</span>
+                                        <button id="btn-step-4" onclick="copyCode('btn-step-4', 'DEEPSEEK_API_KEY=sk-1232138y218327472164422')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
+                                            <i class="fa-regular fa-copy mr-1"></i> Salin
+                                        </button>
+                                    </div>
+                                    <pre class="code-block p-4 text-sm text-blue-300 font-mono overflow-x-auto"><code><span class="text-slate-500"># Format:</span>
 DEEPSEEK_API_KEY=sk-isi-key-anda-disini
 
 <span class="text-slate-500"># Contoh Real:</span>
 DEEPSEEK_API_KEY=sk-1232138y218327472164422</code></pre>
-                    </div>
-                    <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
-                        <p class="text-sm text-slate-700"><strong>Penjelasan:</strong> Kita menggunakan file <code>.env</code> (environment variables) agar kunci rahasia ini tidak tertulis langsung di dalam kode program. Ini adalah praktik keamanan standar.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 5 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">5</span>
-                    <h2 class="text-xl font-semibold text-slate-800">Pengaturan Port dan Akses Jaringan</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-slate-600 mb-4">Agar aplikasi bisa diakses dari luar (melalui IP jaringan), kita perlu mengatur alamat host dan port-nya.</p>
-                    
-                    <p class="font-mono text-sm bg-slate-100 p-2 rounded mb-3 inline-block"><strong>Perintah:</strong> <code>nano main.py</code></p>
-                    
-                    <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
-                        <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
-                            <span class="text-xs font-medium text-slate-400">Edit baris di main.py</span>
-                            <button id="btn-step-5" onclick="copyCode('btn-step-5', 'uvicorn.run(app, host=\'0.0.0.0\', port=8000)')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
-                                <i class="fa-regular fa-copy mr-1"></i> Salin
-                            </button>
+                                </div>
+                                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                                    <p class="text-sm text-slate-700"><strong>Penjelasan:</strong> Kita menggunakan file <code>.env</code> (environment variables) agar kunci rahasia ini tidak tertulis langsung di dalam kode program. Ini adalah praktik keamanan standar.</p>
+                                </div>
+                            </div>
                         </div>
-                        <pre class="code-block p-4 text-sm text-blue-300 font-mono overflow-x-auto"><code>uvicorn.run(app, host="0.0.0.0", port=8000)</code></pre>
-                    </div>
-                    <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
-                        <p class="text-sm text-slate-700 mb-2"><strong>Penjelasan:</strong></p>
-                        <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">
-                            <li><code>host="0.0.0.0"</code>: Artinya aplikasi akan mendengarkan koneksi dari semua alamat IP (tidak hanya localhost).</li>
-                            <li><code>port=8000</code>: Alamat pintu masuk aplikasi. Kamu bisa mengubahnya ke port lain jika port 8000 sudah digunakan.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Step 6 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">6</span>
-                    <h2 class="text-xl font-semibold text-slate-800">Pengujian Tahap Awal</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-slate-600 mb-4">Sebelum dijalankan secara permanen, kita tes dulu apakah aplikasi berfungsi dengan baik.</p>
-                    
-                    <div class="relative bg-slate-900 rounded-lg overflow-hidden group mb-4">
-                        <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
-                            <span class="text-xs font-medium text-slate-400">Terminal</span>
-                            <button id="btn-step-6" onclick="copyCode('btn-step-6', 'python main.py')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
-                                <i class="fa-regular fa-copy mr-1"></i> Salin
-                            </button>
+                        <!-- Step 5 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
+                            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">5</span>
+                                <h2 class="text-xl font-semibold text-slate-800">Pengaturan Port dan Akses Jaringan</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 mb-4">Agar aplikasi bisa diakses dari luar (melalui IP jaringan), kita perlu mengatur alamat host dan port-nya.</p>
+                                
+                                <p class="font-mono text-sm bg-slate-100 p-2 rounded mb-3 inline-block"><strong>Perintah:</strong> <code>nano main.py</code></p>
+                                
+                                <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
+                                    <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                        <span class="text-xs font-medium text-slate-400">Edit baris di main.py</span>
+                                        <button id="btn-step-5" onclick="copyCode('btn-step-5', 'uvicorn.run(app, host=\'0.0.0.0\', port=8000)')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
+                                            <i class="fa-regular fa-copy mr-1"></i> Salin
+                                        </button>
+                                    </div>
+                                    <pre class="code-block p-4 text-sm text-blue-300 font-mono overflow-x-auto"><code>uvicorn.run(app, host="0.0.0.0", port=8000)</code></pre>
+                                </div>
+                                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                                    <p class="text-sm text-slate-700 mb-2"><strong>Penjelasan:</strong></p>
+                                    <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                                        <li><code>host="0.0.0.0"</code>: Artinya aplikasi akan mendengarkan koneksi dari semua alamat IP (tidak hanya localhost).</li>
+                                        <li><code>port=8000</code>: Alamat pintu masuk aplikasi. Kamu bisa mengubahnya ke port lain jika port 8000 sudah digunakan.</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                        <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>python main.py</code></pre>
-                    </div>
-                    
-                    <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
-                        <p class="text-sm text-slate-700"><strong>Cara Cek:</strong> Buka browser dan ketikkan alamat IP servermu beserta port-nya. Contoh: <code>http://192.168.1.10:8000</code> atau <code>http://localhost:8000</code>. Jika muncul tampilan web atau respon JSON, berarti konfigurasi sudah benar.</p>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Step 7 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
-                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">7</span>
-                    <h2 class="text-xl font-semibold text-slate-800">Menjalankan di Background dengan PM2</h2>
-                </div>
-                <div class="p-6">
-                    <p class="text-slate-600 mb-4">Jika kamu menutup terminal pada langkah ke-6, aplikasi akan mati. Supaya aplikasi tetap hidup selamanya (bahkan setelah server restart), kita gunakan <strong>PM2</strong> (Project Manager).</p>
-                    
-                    <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
-                        <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
-                            <span class="text-xs font-medium text-slate-400">Terminal</span>
-                            <button id="btn-step-7" onclick="copyCode('btn-step-7', 'deactivate\npm2 start main.py --name \'PageIndex-AI\' --interpreter ./venv/bin/python')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
-                                <i class="fa-regular fa-copy mr-1"></i> Salin
-                            </button>
+                        <!-- Step 6 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
+                            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">6</span>
+                                <h2 class="text-xl font-semibold text-slate-800">Pengujian Tahap Awal</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 mb-4">Sebelum dijalankan secara permanen, kita tes dulu apakah aplikasi berfungsi dengan baik.</p>
+                                
+                                <div class="relative bg-slate-900 rounded-lg overflow-hidden group mb-4">
+                                    <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                        <span class="text-xs font-medium text-slate-400">Terminal</span>
+                                        <button id="btn-step-6" onclick="copyCode('btn-step-6', 'python main.py')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
+                                            <i class="fa-regular fa-copy mr-1"></i> Salin
+                                        </button>
+                                    </div>
+                                    <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>python main.py</code></pre>
+                                </div>
+                                
+                                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                                    <p class="text-sm text-slate-700"><strong>Cara Cek:</strong> Buka browser dan ketikkan alamat IP servermu beserta port-nya. Contoh: <code>http://192.168.1.10:8000</code> atau <code>http://localhost:8000</code>. Jika muncul tampilan web atau respon JSON, berarti konfigurasi sudah benar.</p>
+                                </div>
+                            </div>
                         </div>
-                        <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>deactivate
+
+                        <!-- Step 7 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition hover:shadow-md">
+                            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm mr-4">7</span>
+                                <h2 class="text-xl font-semibold text-slate-800">Menjalankan di Background dengan PM2</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 mb-4">Jika kamu menutup terminal pada langkah ke-6, aplikasi akan mati. Supaya aplikasi tetap hidup selamanya (bahkan setelah server restart), kita gunakan <strong>PM2</strong> (Project Manager).</p>
+                                
+                                <div class="relative bg-slate-900 rounded-lg overflow-hidden group">
+                                    <div class="flex justify-between items-center px-4 py-2 bg-slate-800 border-b border-slate-700">
+                                        <span class="text-xs font-medium text-slate-400">Terminal</span>
+                                        <button id="btn-step-7" onclick="copyCode('btn-step-7', 'deactivate\npm2 start main.py --name \'PageIndex-AI\' --interpreter ./venv/bin/python')" class="text-slate-400 hover:text-white transition text-sm flex items-center">
+                                            <i class="fa-regular fa-copy mr-1"></i> Salin
+                                        </button>
+                                    </div>
+                                    <pre class="code-block p-4 text-sm text-green-400 font-mono overflow-x-auto"><code>deactivate
 pm2 start main.py --name "PageIndex-AI" --interpreter ./venv/bin/python</code></pre>
+                                </div>
+                                
+                                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                                    <p class="text-sm text-slate-700 font-semibold mb-2">Penjelasan:</p>
+                                    <ul class="list-disc pl-5 text-sm text-slate-700 space-y-2">
+                                        <li><strong><code>deactivate</code></strong>: Keluar dari virtual environment di sesi terminal saat ini.</li>
+                                        <li><strong><code>pm2 start</code></strong>: Memulai aplikasi di latar belakang.</li>
+                                        <li><strong><code>--name "PageIndex-AI"</code></strong>: Memberikan nama pada proses agar mudah dipantau di list PM2.</li>
+                                        <li><strong><code>--interpreter ./venv/bin/python</code></strong>: Memberitahu PM2 untuk menjalankan script menggunakan Python yang ada di dalam folder <code>venv</code> tadi, bukan Python global dari sistem.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Tips -->
+                        <div class="bg-indigo-50 rounded-xl border border-indigo-200 p-6 shadow-sm">
+                            <h3 class="text-lg font-bold text-indigo-900 flex items-center mb-3">
+                                <i class="fa-solid fa-lightbulb text-yellow-500 mr-2"></i> Tips Tambahan
+                            </h3>
+                            <p class="text-indigo-800 text-sm md:text-base leading-relaxed">
+                                Untuk melihat status aplikasi yang sedang berjalan di PM2, kamu bisa menggunakan perintah <code class="bg-indigo-100 px-2 py-1 rounded text-indigo-900 font-mono font-bold">pm2 status</code>. <br class="hidden sm:block">
+                                Jika ingin melihat log aktivitas atau error, gunakan perintah <code class="bg-indigo-100 px-2 py-1 rounded text-indigo-900 font-mono font-bold">pm2 logs PageIndex-AI</code>.
+                            </p>
+                        </div>
                     </div>
-                    
-                    <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
-                        <p class="text-sm text-slate-700 font-semibold mb-2">Penjelasan:</p>
-                        <ul class="list-disc pl-5 text-sm text-slate-700 space-y-2">
-                            <li><strong><code>deactivate</code></strong>: Keluar dari virtual environment di sesi terminal saat ini.</li>
-                            <li><strong><code>pm2 start</code></strong>: Memulai aplikasi di latar belakang.</li>
-                            <li><strong><code>--name "PageIndex-AI"</code></strong>: Memberikan nama pada proses agar mudah dipantau di list PM2.</li>
-                            <li><strong><code>--interpreter ./venv/bin/python</code></strong>: Memberitahu PM2 untuk menjalankan script menggunakan Python yang ada di dalam folder <code>venv</code> tadi, bukan Python global dari sistem.</li>
-                        </ul>
-                    </div>
-                </div>
+                </main>
             </div>
 
-            <!-- Additional Tips -->
-            <div class="bg-indigo-50 rounded-xl border border-indigo-200 p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-indigo-900 flex items-center mb-3">
-                    <i class="fa-solid fa-lightbulb text-yellow-500 mr-2"></i> Tips Tambahan
-                </h3>
-                <p class="text-indigo-800 text-sm md:text-base leading-relaxed">
-                    Untuk melihat status aplikasi yang sedang berjalan di PM2, kamu bisa menggunakan perintah <code class="bg-indigo-100 px-2 py-1 rounded text-indigo-900 font-mono font-bold">pm2 status</code>. <br class="hidden sm:block">
-                    Jika ingin melihat log aktivitas atau error, gunakan perintah <code class="bg-indigo-100 px-2 py-1 rounded text-indigo-900 font-mono font-bold">pm2 logs PageIndex-AI</code>.
-                </p>
+            <!-- ===================== README SECTION ===================== -->
+            <div id="section-readme" class="content-section hidden pb-12">
+                <!-- Readme Header -->
+                <header class="bg-indigo-600 text-white shadow-lg">
+                    <div class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+                        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
+                            <i class="fa-solid fa-file-lines mr-3"></i>Readme / Informasi
+                        </h1>
+                        <p class="text-indigo-100 text-lg">Catatan rilis dan informasi keberhasilan deployment dokumentasi.</p>
+                    </div>
+                </header>
+
+                <!-- Readme Content -->
+                <main class="max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
+                    <div class="bg-white rounded-xl shadow-md border border-slate-200 p-8">
+                        <div class="flex items-center mb-6 pb-6 border-b border-slate-100">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                <i class="fa-solid fa-check text-green-600 text-2xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-800">Status Dokumentasi</h2>
+                                <p class="text-slate-500 text-sm">Update Sistem Terakhir</p>
+                            </div>
+                        </div>
+
+                        <div class="prose max-w-none text-slate-700">
+                            <p class="text-lg leading-relaxed mb-8">
+                                <span class="font-semibold text-slate-900">Dokumentasi ini dibuat setelah uji coba di VPS dan berhasil.</span> Semua baris kode dan instruksi yang tertera di dalam bagian tutorial telah melewati tahapan pengujian secara langsung dan berjalan sesuai dengan ekspektasi.
+                            </p>
+
+                            <div class="bg-slate-50 rounded-lg border border-slate-200 p-5 inline-block">
+                                <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Waktu Pengujian</h3>
+                                <ul class="space-y-3 font-mono text-sm">
+                                    <li class="flex items-center">
+                                        <i class="fa-regular fa-calendar text-blue-500 mr-3 text-lg"></i> 
+                                        <span class="text-slate-600 mr-2">Tanggal :</span> 
+                                        <span class="font-semibold text-slate-900 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">14-04-2026</span>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <i class="fa-regular fa-clock text-blue-500 mr-3 text-lg"></i> 
+                                        <span class="text-slate-600 mr-2">Jam :</span> 
+                                        <span class="font-semibold text-slate-900 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">19:42</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </main>
             </div>
 
+            <!-- Shared Footer -->
+            <footer class="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800">
+                <p class="text-sm">Panduan Deployment Lengkap • Dioptimalkan untuk Mobile, Tablet, dan Desktop.</p>
+            </footer>
         </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-400 py-8 text-center mt-8">
-        <p class="text-sm">Panduan Deployment Lengkap • Dioptimalkan untuk Mobile, Tablet, dan Desktop.</p>
-    </footer>
+    </div>
 
 </body>
 </html>
